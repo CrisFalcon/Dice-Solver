@@ -6,62 +6,47 @@ using System;
 
 public class Dice : MonoBehaviour
 {
-    public Face currentFace = Face.TWO;
-    public Face desiredFace = Face.ONE;
-
-    [SerializeField] DiceMovement _movement;
-
+    [SerializeField] Face _desiredFace = Face.ONE;
+    [SerializeField] Face _currentFace = Face.TWO;
     Dictionary<Normals, Face> _faceStatus;
 
     [SerializeField] GridBoard _board;
-
     [SerializeField] Coordinate currentPos = new Coordinate(0, 0);
-
     Dictionary<Directions, Coordinate> _directions;
 
+    [SerializeField] DiceMovement _movement;
     bool _canMove = true;
     public bool IsMoving { get { return _path.Count > 0; } }
 
-    Queue<Directions> _path = new Queue<Directions>();
     DiceSolver _solver = new DiceSolver();
+    Queue<Directions> _path = new Queue<Directions>();
 
-    #region Initialize
     void Start()
     {
-        _faceStatus = new Dictionary<Normals, Face>();
-        _faceStatus.Add(Normals.RIGHT, Face.ONE);
-        _faceStatus.Add(Normals.UP, Face.TWO);
-        _faceStatus.Add(Normals.BACK, Face.THREE);
-        _faceStatus.Add(Normals.LEFT, Face.SIX);
-        _faceStatus.Add(Normals.FORWARD, Face.FOUR);
-        _faceStatus.Add(Normals.DOWN, Face.FIVE);
-
+        _faceStatus = new Dictionary<Normals, Face>()
+        {
+            [Normals.RIGHT] = Face.ONE,
+            [Normals.UP] = Face.TWO,
+            [Normals.BACK] = Face.THREE,
+            [Normals.FORWARD] = Face.FOUR,
+            [Normals.DOWN] = Face.FIVE,
+            [Normals.LEFT] = Face.SIX
+        };
         _directions = new Dictionary<Directions, Coordinate>(Tools.CoorDir);
         _movement.SetTransform(transform);
-    }
-    #endregion
-
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            if (currentFace == desiredFace) return;
-
-            Solve();
-        }
     }
 
     public void Solve(int desired)
     {
         if (IsMoving) return;
-        desiredFace = (Face)desired;
+        _desiredFace = (Face)desired;
         Solve();
     }
 
     void Solve()
     {
         var start = new WorldState(_faceStatus, currentPos);
-        Face desired = desiredFace;
+        Face desired = _desiredFace;
 
         Func<WorldState, bool> satisfies = x => x.faceStatus[Normals.UP] == desired;
 
@@ -69,11 +54,11 @@ public class Dice : MonoBehaviour
 
         Func<WorldState, float> heuristic = x =>
         {
-            Vector3 startPos = new Vector3(start.currentPosition.x, start.currentPosition.y);
-            Vector3 endPos = new Vector3(x.currentPosition.x, x.currentPosition.y);
+            Vector3 startPos = new(start.currentPosition.x, start.currentPosition.y);
+            Vector3 endPos = new(x.currentPosition.x, x.currentPosition.y);
             float total = (endPos - startPos).sqrMagnitude;
 
-            if (x.faceStatus[Normals.UP] != desiredFace) total += 3;
+            if (x.faceStatus[Normals.UP] != _desiredFace) total += 3;
             return total;
         };
 
@@ -84,22 +69,11 @@ public class Dice : MonoBehaviour
         if (_path.Count > 0) StartCoroutine(FeedDirections(_path));
     }
 
-
-    void ApplyNewCoordinates(Directions dir)
-    {
-        currentPos += _directions[dir];
-    }
-
-    void SwitchDirections(Directions dir)
-    {
-        _faceStatus = _faceStatus.SwitchFace(dir);
-        currentFace = _faceStatus[Normals.UP];
-    }
-
     IEnumerable<Directions> AvailableDirections(Coordinate pos)
     {
         return _directions.Where(x => _board.MoveAvailable(pos + x.Value)).Select(x => x.Key);
     }
+
 
     void RollDie(Directions dir)
     {
@@ -108,6 +82,14 @@ public class Dice : MonoBehaviour
         StartCoroutine(_movement.Roll(dir, x => _canMove = x));
         SwitchDirections(dir);
         ApplyNewCoordinates(dir);
+    }
+
+    void ApplyNewCoordinates(Directions dir) => currentPos += _directions[dir];
+
+    void SwitchDirections(Directions dir)
+    {
+        _faceStatus = _faceStatus.SwitchFace(dir);
+        _currentFace = _faceStatus[Normals.UP];
     }
 
     IEnumerator FeedDirections(Queue<Directions> directions)

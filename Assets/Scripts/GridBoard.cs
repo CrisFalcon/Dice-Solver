@@ -10,11 +10,8 @@ public class GridBoard : MonoBehaviour
 
     public Coordinate[,] Grid { get { return _grid; } }
 
-    private void Start()
-    {
-        GenerateGrid();
-    }
-
+    private void Start() => GenerateGrid();
+    
     void GenerateGrid()
     {
         _grid = new Coordinate[_size, _size];

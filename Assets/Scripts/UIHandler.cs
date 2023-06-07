@@ -8,23 +8,14 @@ public class UIHandler : MonoBehaviour
 
     Coroutine activateRouine = null;
 
-    void Update()
-    {
-        HandleDices();
-    }
-
+    void Update() => HandleDices();
+    
     void HandleDices()
     {
-        if (dice.IsMoving == true)
-        {
-            diceUI.SetActive(false);
-            return;
-        }
-
         if (diceUI.activeSelf == false && !dice.IsMoving && activateRouine == null)
-        {
             activateRouine = StartCoroutine(ActivateUI());
-        }
+
+        if (dice.IsMoving == true) diceUI.SetActive(false);
     }
 
     IEnumerator ActivateUI()

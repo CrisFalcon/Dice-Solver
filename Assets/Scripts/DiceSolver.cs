@@ -38,11 +38,10 @@ public class DiceSolver
             }
 
             var neighbors = getNeighbors(current);
+            int newCost = costSoFar[current] + 1;
 
             foreach (var next in neighbors)
             {
-                int newCost = costSoFar[current] + 1;
-
                 if (!costSoFar.ContainsKey(next))
                 {
                     frontier.Add(next, newCost + heuristic(next));
@@ -53,6 +52,7 @@ public class DiceSolver
                 {
                     if (frontier.ContainsKey(next)) frontier[next] = newCost + heuristic(next);
                     else frontier.Add(next, newCost + heuristic(next));
+
                     costSoFar[next] = newCost;
                     cameFrom[next] = current;
                 }
